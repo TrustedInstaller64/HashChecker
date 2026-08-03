@@ -1,0 +1,41 @@
+#pragma once
+
+#include "scan/scan_filter.h"
+#include <cstdint>
+#include <filesystem>
+#include <string>
+#include <vector>
+
+namespace scan {
+
+/// A single file found during scanning.
+struct ScanEntry {
+    std::filesystem::path relative_path;
+    std::uintmax_t file_size = 0;
+};
+
+/// A non-fatal error encountered during scanning.
+struct ScanError {
+    std::filesystem::path relative_path;
+    std::string message;
+};
+
+/// The result of a directory scan.
+struct ScanOutcome {
+    std::filesystem::path root;
+    std::vector<ScanEntry> entries;  // sorted by relative_path
+    std::uintmax_t total_bytes = 0;
+    std::vector<ScanError> errors;
+};
+
+/// Recursively scans a directory for regular files.
+class FileScanner {
+public:
+    /// Scan all regular files in `root` (no filter).
+    static ScanOutcome scan(const std::filesystem::path& root);
+
+    /// Scan regular files in `root` that pass the given filter.
+    static ScanOutcome scan(const std::filesystem::path& root, const ScanFilter& filter);
+};
+
+} // namespace scan
