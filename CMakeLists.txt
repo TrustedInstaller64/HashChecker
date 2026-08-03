@@ -13,9 +13,10 @@ option(BUILD_TESTS "Build test suite" ON)
 
 find_package(Threads REQUIRED)
 
-# MSVC: force UTF-8 source encoding
+# MSVC: UTF-8 source + static runtime (no DLL dependencies)
 if(MSVC)
     add_compile_options(/utf-8 /wd4819)
+    set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
 endif()
 
 # ── Helper: apply sanitizer flags ────────────────────────

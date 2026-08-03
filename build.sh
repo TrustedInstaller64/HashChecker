@@ -1,5 +1,6 @@
 #!/bin/sh
 set -e
+rm -rf build
 cmake -B build -DCMAKE_BUILD_TYPE=Release "$@"
 cmake --build build
 echo "=== Build complete ==="
@@ -17,5 +18,4 @@ if [ "$answer" = "Y" ] || [ "$answer" = "y" ]; then
     fi
 fi
 echo ""
-rm -rf build
-echo "=== Done (build cleaned) ==="
+echo "=== Done ==="
