@@ -11,6 +11,15 @@ option(ENABLE_TSAN "Enable ThreadSanitizer" OFF)
 option(ENABLE_UBSAN "Enable UndefinedBehaviorSanitizer" OFF)
 option(BUILD_TESTS "Build test suite" ON)
 
+# Native digest backend: CommonCrypto on Apple, BCrypt on Windows. Both expose
+# hardware-accelerated SHA-1/SHA-256; the portable implementations remain the
+# fallback (and are what the unit tests hash the RFC vectors through).
+set(_platform_digest_default OFF)
+if(APPLE OR WIN32)
+    set(_platform_digest_default ON)
+endif()
+option(HASHCHECKER_PLATFORM_DIGEST "Use the platform crypto library for hashing" ${_platform_digest_default})
+
 find_package(Threads REQUIRED)
 
 # MSVC: UTF-8 source + static runtime (no DLL dependencies)
@@ -51,6 +60,17 @@ add_library(hashchecker_core STATIC ${LIB_SOURCES})
 target_include_directories(hashchecker_core PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/src)
 target_link_libraries(hashchecker_core PUBLIC Threads::Threads)
 add_sanitizers(hashchecker_core)
+
+if(HASHCHECKER_PLATFORM_DIGEST)
+    if(APPLE)
+        target_compile_definitions(hashchecker_core PUBLIC HASHCHECKER_USE_COMMONCRYPTO)
+    elseif(WIN32)
+        target_compile_definitions(hashchecker_core PUBLIC HASHCHECKER_USE_BCRYPT)
+        target_link_libraries(hashchecker_core PUBLIC bcrypt)
+    else()
+        message(FATAL_ERROR "HASHCHECKER_PLATFORM_DIGEST is supported only on Apple and Windows")
+    endif()
+endif()
 
 # ── CLI executable ───────────────────────────────────────
 add_executable(hashchecker src/main.cpp)
