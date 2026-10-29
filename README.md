@@ -85,6 +85,7 @@ hashchecker -t ./a -r ./b -a md5 -v
 | `ENABLE_ASAN` | OFF | AddressSanitizer |
 | `ENABLE_TSAN` | OFF | ThreadSanitizer |
 | `ENABLE_UBSAN` | OFF | UB Sanitizer |
+| `HASHCHECKER_PLATFORM_DIGEST` | Apple: ON / Windows: OFF | 用系统加密库（CommonCrypto / BCrypt）替换便携实现；Windows 后端 opt-in，可用 CI 验证后再打开 |
 
 ## 项目结构
 
@@ -92,11 +93,11 @@ hashchecker -t ./a -r ./b -a md5 -v
 src/
 ├── main.cpp              CLI 入口
 ├── app.h/cpp             编排器
-├── hash/                 哈希算法 + 并行计算
+├── hash/                 哈希算法（便携实现 + 平台后端）
 ├── scan/                 目录扫描 (Win32 API / std::filesystem)
 ├── compare/              有序合并比较器
 ├── report/               text / quiet / JSON
-└── infra/                线程池 / Result<T,E>
+└── infra/                线程池
 tests/
 ├── third_party/doctest.h
 ├── test_*.cpp            7 个单元测试
