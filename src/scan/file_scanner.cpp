@@ -55,8 +55,11 @@ static ScanOutcome scan_impl(const fs::path& root) {
                     dirs.push_back(entry_path);
                 }
             } else if (!(fd.dwFileAttributes & FILE_ATTRIBUTE_REPARSE_POINT)) {
-                auto rel = fs::relative(entry_path, root, ec);
-                if (ec) { rel = entry_path.filename(); ec.clear(); }
+                // Lexical computation: entry_path is always root / something, so we can
+                // derive the relative path without fs::relative()'s canonicalization
+                // (weakly_canonical does multiple stat calls per file).
+                auto rel = entry_path.lexically_relative(root);
+                if (rel.empty()) rel = entry_path.filename();
 
                 std::uintmax_t size =
                     (static_cast<std::uintmax_t>(fd.nFileSizeHigh) << 32) | fd.nFileSizeLow;
@@ -106,8 +109,11 @@ static ScanOutcome scan_impl(const fs::path& root) {
                 if (!ec) dirs.push_back(entry.path());
                 ec.clear();
             } else if (entry.is_regular_file(ec)) {
-                auto rel = fs::relative(entry.path(), root, ec);
-                if (ec) { rel = entry.path().filename(); ec.clear(); }
+                // See the Windows branch: entry.path() is always under root, so compute
+                // the relative path lexically instead of with the syscall-heavy
+                // fs::relative().
+                auto rel = entry.path().lexically_relative(root);
+                if (rel.empty()) rel = entry.path().filename();
 
                 std::uintmax_t size = entry.file_size(ec);
                 if (ec) { size = 0; ec.clear(); }
