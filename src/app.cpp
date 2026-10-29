@@ -187,31 +187,9 @@ int run(const AppConfig& config) {
         return result.identical() ? 0 : 1;
     }
 
-    // ── 3b. Create thread pools (directory mode) ──────────
-    std::size_t target_th = config.target_threads;
-    std::size_t ref_th = config.reference_threads;
-
-    if (target_th == 0 && ref_th == 0 && config.num_threads == 0) {
-        // Auto: 40% each, 80% total
-        std::size_t hw = std::thread::hardware_concurrency();
-        if (hw == 0) hw = 4;
-        target_th = std::max(std::size_t(1), hw * 2 / 5);
-        ref_th = std::max(std::size_t(1), hw * 2 / 5);
-    } else {
-        // -j = total threads, split evenly between both drives
-        std::size_t half = std::max(std::size_t(1), config.num_threads / 2);
-        if (target_th == 0) target_th = half;
-        if (ref_th == 0) ref_th = half;
-    }
-
-    infra::ThreadPool target_pool(target_th);
-    infra::ThreadPool ref_pool(ref_th);
-
     if (!config.quiet) {
         std::cout << "HashChecker v1.0.0\n"
                   << "Algorithm: " << config.algorithm << '\n'
-                  << "Target threads:    " << target_pool.worker_count() << '\n'
-                  << "Reference threads: " << ref_pool.worker_count() << '\n'
                   << "Target:    " << target_path.u8string() << '\n'
                   << "Reference: " << ref_path.u8string() << '\n'
                   << '\n';
@@ -261,6 +239,49 @@ int run(const AppConfig& config) {
                   << target_scan.total_bytes << " bytes)\n";
         std::cout << "Reference: " << ref_scan.entries.size() << " files ("
                   << ref_scan.total_bytes << " bytes)\n\n";
+    }
+
+    // ── 4b. Create thread pools sized to the scanned workload
+    std::size_t target_th = config.target_threads;
+    std::size_t ref_th = config.reference_threads;
+
+    if (target_th == 0 && ref_th == 0 && config.num_threads == 0) {
+        // Auto: 80% of the CPU total, split by the number of files so a small
+        // side does not leave workers idle while the other side still queues.
+        std::size_t hw = std::thread::hardware_concurrency();
+        if (hw == 0) hw = 4;
+        const std::size_t total = std::max<std::size_t>(2, hw * 4 / 5);
+        const std::size_t t_count = target_scan.entries.size();
+        const std::size_t r_count = ref_scan.entries.size();
+        if (t_count == 0 && r_count == 0) {
+            target_th = 1;
+            ref_th = 1;
+        } else if (t_count == 0) {
+            target_th = 1;
+            ref_th = total;
+        } else if (r_count == 0) {
+            target_th = total;
+            ref_th = 1;
+        } else {
+            target_th = std::max<std::size_t>(1, total * t_count / (t_count + r_count));
+            if (target_th >= total) {
+                target_th = total - 1;
+            }
+            ref_th = total - target_th;
+        }
+    } else {
+        // -j = total threads, split evenly between both drives
+        std::size_t half = std::max(std::size_t(1), config.num_threads / 2);
+        if (target_th == 0) target_th = half;
+        if (ref_th == 0) ref_th = half;
+    }
+
+    infra::ThreadPool target_pool(target_th);
+    infra::ThreadPool ref_pool(ref_th);
+
+    if (!config.quiet) {
+        std::cout << "Threads: " << target_pool.worker_count() << " target / "
+                  << ref_pool.worker_count() << " reference\n\n";
     }
 
     // ── 5. Hash files in parallel via thread pool ────────

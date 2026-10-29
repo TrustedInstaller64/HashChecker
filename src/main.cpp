@@ -21,7 +21,7 @@ void print_help(const char* prog) {
                  "  -r, --reference <dir>    Reference/original directory (required)\n"
                  "  -a, --algorithm <alg>    Hash algorithm: md5, sha1, sha256 (default: "
                  "md5)\n"
-                 "  -j, --threads <n>        Total threads, split evenly (default: 40%% CPU each)\n"
+                 "  -j, --threads <n>        Total threads (default: 80%% CPU, by file count)\n"
                  "  -T, --target-threads <n> Threads for -t drive (overrides -j split)\n"
                  "  -R, --ref-threads <n>    Threads for -r drive (overrides -j split)\n"
                  "  -o, --output <file>      Save report to file\n"

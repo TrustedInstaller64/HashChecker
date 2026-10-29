@@ -47,7 +47,7 @@ hashchecker --target <dir> --reference <dir> [options]
 | `--target` | `-t` | 目标/副本目录（必选） | — |
 | `--reference` | `-r` | 参考/原始目录（必选） | — |
 | `--algorithm` | `-a` | md5 / sha1 / sha256 | md5 |
-| `--threads` | `-j` | 总线程数，两边均分 | 各 40% CPU |
+| `--threads` | `-j` | 总线程数，两边均分 | 共 80% CPU，按文件数分配 |
 | `--target-threads` | `-T` | 目标盘专用线程数 | 用0.5倍 `-j` 的值 |
 | `--ref-threads` | `-R` | 参考盘专用线程数 | 用0.5倍 `-j` 的值 |
 | `--output` | `-o` | 报告保存到文件 | stdout |
