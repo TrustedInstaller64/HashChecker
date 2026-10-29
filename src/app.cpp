@@ -67,10 +67,12 @@ bool hash_file(const fs::path& path, const std::string& algorithm, std::string& 
         return false;
     }
 
-    constexpr std::size_t kBufSize = 65536;
-    std::vector<uint8_t> buffer(kBufSize);
+    // One reuse buffer per worker thread: allocating (and zeroing) a fresh
+    // 64 KiB vector per file cost ~11us on the small-file benchmark.
+    thread_local std::vector<uint8_t> buffer(65536);
+    const auto buf_size = static_cast<std::streamsize>(buffer.size());
     try {
-        while (file.read(reinterpret_cast<char*>(buffer.data()), kBufSize) ||
+        while (file.read(reinterpret_cast<char*>(buffer.data()), buf_size) ||
                file.gcount() > 0) {
             hasher->update(buffer.data(), static_cast<std::size_t>(file.gcount()));
         }
@@ -298,7 +300,7 @@ int run(const AppConfig& config) {
                     auto n = ++(*counter);
                     if (verbose) {
                         std::cout << '[' << label << "] [" << n << '/' << total << "] "
-                                  << rel_path_str << std::endl;
+                                  << rel_path_str << '\n';
                     }
                 }
 
