@@ -133,12 +133,20 @@ int run(const AppConfig& config) {
         std::string target_hash, ref_hash, target_err, ref_err;
         if (!config.quiet) {
             std::cout << "Computing hash of " << target_path.filename().u8string() << " ...\n";
-        }
-        hash_file(target_path, config.algorithm, target_hash, target_err);
-        if (!config.quiet) {
             std::cout << "Computing hash of " << ref_path.filename().u8string() << " ...\n";
         }
-        hash_file(ref_path, config.algorithm, ref_hash, ref_err);
+
+        // The two files are independent and hashing is CPU-bound, so hash them
+        // concurrently. On a single large-file pair this roughly halves the time.
+        auto target_future = std::async(std::launch::async, [&] {
+            return hash_file(target_path, config.algorithm, target_hash, target_err);
+        });
+        auto ref_future = std::async(std::launch::async, [&] {
+            return hash_file(ref_path, config.algorithm, ref_hash, ref_err);
+        });
+        // Errors (if any) are reported through target_err/ref_err below.
+        (void)target_future.get();
+        (void)ref_future.get();
 
         if (!target_err.empty()) {
             std::cerr << "Error (target): " << target_err << '\n';
