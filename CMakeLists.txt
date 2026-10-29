@@ -14,8 +14,10 @@ option(BUILD_TESTS "Build test suite" ON)
 # Native digest backend: CommonCrypto on Apple, BCrypt on Windows. Both expose
 # hardware-accelerated SHA-1/SHA-256; the portable implementations remain the
 # fallback (and are what the unit tests hash the RFC vectors through).
+# Default ON only where the build has been verified; on Windows pass
+# -DHASHCHECKER_PLATFORM_DIGEST=ON to opt into the BCrypt backend.
 set(_platform_digest_default OFF)
-if(APPLE OR WIN32)
+if(APPLE)
     set(_platform_digest_default ON)
 endif()
 option(HASHCHECKER_PLATFORM_DIGEST "Use the platform crypto library for hashing" ${_platform_digest_default})
