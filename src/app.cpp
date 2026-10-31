@@ -188,7 +188,7 @@ int run(const AppConfig& config) {
     }
 
     if (!config.quiet) {
-        std::cout << "HashChecker v1.0.0\n"
+        std::cout << "HashChecker v1.0.1\n"
                   << "Algorithm: " << config.algorithm << '\n'
                   << "Target:    " << target_path.u8string() << '\n'
                   << "Reference: " << ref_path.u8string() << '\n'

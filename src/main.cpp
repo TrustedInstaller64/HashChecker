@@ -11,7 +11,7 @@
 
 namespace {
 
-void print_version() { std::cout << "hashchecker v1.0.0\n"; }
+void print_version() { std::cout << "hashchecker v1.0.1\n"; }
 
 void print_help(const char* prog) {
     std::cout << "Usage: " << prog
