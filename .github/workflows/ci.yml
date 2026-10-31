@@ -14,7 +14,9 @@ jobs:
       - name: Configure
         run: cmake -B build -DCMAKE_BUILD_TYPE=${{ matrix.build_type }}
       - name: Build
-        run: cmake --build build --parallel
+        # Multi-config generators (Visual Studio) ignore CMAKE_BUILD_TYPE and build
+        # Debug by default, so pass the configuration explicitly.
+        run: cmake --build build --parallel --config ${{ matrix.build_type }}
       - name: Test
         # Multi-config generators (Visual Studio) need the configuration; harmless elsewhere.
         run: cd build && ctest -C ${{ matrix.build_type }} --output-on-failure
