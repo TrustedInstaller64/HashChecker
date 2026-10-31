@@ -2,3 +2,4 @@ build/
 xcode_build/
 .DS_Store
 *.user
+dist/
